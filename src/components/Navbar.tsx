@@ -71,10 +71,17 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, onOpenS
           </button>
           <button 
             onClick={onOpenS2S}
+            title="S2S Sandbox"
             className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-medium"
           >
             <Terminal className="w-4 h-4 text-emerald-400" />
             <span>S2S Sandbox</span>
+          </button>
+          <button 
+            onClick={() => (window as any).openAdminModal?.()}
+            className="px-3 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+          >
+            <span>Admin</span>
           </button>
           <button 
             onClick={() => setActiveTab('contact')}

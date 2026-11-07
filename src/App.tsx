@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ActiveTab } from './types';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -17,12 +17,57 @@ import { ContactView } from './components/ContactView';
 import { S2SSimulatorModal } from './components/S2SSimulatorModal';
 import { CalculatorModal } from './components/CalculatorModal';
 import { LegalModal } from './components/LegalModal';
+import { AdminLoginModal } from './components/AdminLoginModal';
+import { AdminDashboard } from './components/AdminDashboard';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [s2sModalOpen, setS2sModalOpen] = useState(false);
   const [calcModalOpen, setCalcModalOpen] = useState(false);
   const [legalModalState, setLegalModalState] = useState<'privacy' | 'terms' | 'disclaimer' | null>(null);
+  
+  const [adminLoginOpen, setAdminLoginOpen] = useState(false);
+  const [currentAdmin, setCurrentAdmin] = useState<any>(null);
+  const [adminViewMode, setAdminViewMode] = useState(false);
+
+  // Expose global opener for navbar
+  useEffect(() => {
+    (window as any).openAdminModal = () => {
+      if (currentAdmin) {
+        setAdminViewMode(true);
+      } else {
+        setAdminLoginOpen(true);
+      }
+    };
+
+    // Check active session on mount
+    fetch('/api/v1/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.admin) {
+          setCurrentAdmin(data.admin);
+        }
+      })
+      .catch(() => {});
+  }, [currentAdmin]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch {}
+    setCurrentAdmin(null);
+    setAdminViewMode(false);
+  };
+
+  if (adminViewMode && currentAdmin) {
+    return (
+      <AdminDashboard 
+        admin={currentAdmin} 
+        onLogout={handleLogout} 
+        onReturnHome={() => setAdminViewMode(false)} 
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
@@ -99,6 +144,15 @@ export default function App() {
         isOpen={Boolean(legalModalState)} 
         type={legalModalState} 
         onClose={() => setLegalModalState(null)} 
+      />
+
+      <AdminLoginModal 
+        isOpen={adminLoginOpen}
+        onClose={() => setAdminLoginOpen(false)}
+        onSuccess={(admin) => {
+          setCurrentAdmin(admin);
+          setAdminViewMode(true);
+        }}
       />
     </div>
   );
